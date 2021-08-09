@@ -24,6 +24,10 @@ describe('memoize', () => {
             return Math.round(Math.sqrt(power));
         }
 
+        function testFunction(a) {
+            return a + this.b;
+        }
+
         function grep(pattern, ...items) {
             if (!(pattern instanceof RegExp)) { // Special case
                 return null;
@@ -32,13 +36,17 @@ describe('memoize', () => {
         }
 
         let absSpy;
+        let testFunctionSpy;
         let grepSpy;
         let memoizedAbs;
         let memoizedGrep;
+        let memoizedTestFunctionSpy;
 
         beforeEach(() => {
             absSpy = sinon.spy(abs);
             memoizedAbs = memoize(absSpy);
+            testFunctionSpy = sinon.spy(testFunction);
+            memoizedTestFunctionSpy = memoize(testFunctionSpy);
             grepSpy = sinon.spy(grep);
             memoizedGrep = memoize(grepSpy);
         });
@@ -59,6 +67,13 @@ describe('memoize', () => {
             const ctx = {};
             expect(ctx::memoizedAbs(0, 1)).to.equal(1);
             sinon.assert.calledOn(absSpy, ctx);
+        });
+
+        it('returns correct values with different context', () => {
+            const ctx = {b: 1};
+            const ctx2 = {b: 2};
+            expect(ctx::memoizedTestFunctionSpy(1)).to.equal(2);
+            expect(ctx2::memoizedTestFunctionSpy(1)).to.equal(3);
         });
 
         it('returns correct values in case of the consequent calls with identical arguments', () => {
